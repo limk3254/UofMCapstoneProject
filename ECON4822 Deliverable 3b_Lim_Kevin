@@ -1,0 +1,176 @@
+cd "C:\Users\Kevin\Documents\ECON 4822\Assignments\"
+
+use "ECON4822 Deliverable 3b_Lim_Kevin.dta"
+ 
+ //Generate Seasonal Dummies
+ gen Q1=0
+ gen Q2=0
+ gen Q3=0
+ 
+ replace Q1=1 if Quarters==1
+ replace Q2=1 if Quarters==2
+ replace Q3=1 if Quarters==3
+ 
+ //Log transformations
+ list in 1/10
+ generate lnChicken = ln(D_CHIC)
+ generate lnBeef = ln(D_BEEF)
+ generate lnPork = ln(D_PORK)
+ generate lnFish = ln(D_FISH)
+ list in 1/10
+ 
+ //Regress and check for autocorrelation
+ quietly regress D_CHIC MW ARP_CHIC ARP_SIRLOIN ARP_CHOPS ARP_CANNED POP Q1 Q2 Q3
+ estimate store ModelCHIC
+ generate trendC = _n
+ estat dwatson
+ tsset Quarters
+ predict C_hat, residuals
+ tsline C_hat, name(CResidual) yline(0)
+ 
+ quietly regress D_BEEF MW ARP_CHIC ARP_SIRLOIN ARP_CHOPS ARP_CANNED POP Q1 Q2 Q3
+ estimate store ModelBEEF
+ generate trendB = _n
+ estat dwatson
+ tsset Quarters
+ predict B_hat, residuals
+ tsline B_hat, name(BResidual) yline(0)
+ 
+ quietly regress D_PORK MW ARP_CHIC ARP_SIRLOIN ARP_CHOPS ARP_CANNED POP Q1 Q2 Q3
+ estimate store ModelPORK
+ generate trendP = _n
+ estat dwatson
+ tsset Quarters
+ predict P_hat, residuals
+ tsline P_hat, name(PResidual) yline(0)
+ 
+ quietly regress D_FISH MW ARP_CHIC ARP_SIRLOIN ARP_CHOPS ARP_CANNED POP Q1 Q2 Q3
+ estimate store ModelFISH
+ generate trendF = _n
+ estat dwatson
+ tsset Quarters
+ predict F_hat, residuals
+ tsline F_hat, name(FResidual) yline(0)
+ 
+ graph combine CResidual BResidual PResidual FResidual
+ 
+ estimate table RCHIC RBEEF RPORK RFISH, t(%7.2f) p(%7.5f) stats(r2, F, N)
+  
+  //Robust Regression without Dummies
+  quietly regress D_CHIC MW ARP_CHIC ARP_SIRLOIN ARP_CHOPS ARP_CANNED POP, robust
+ estimate store Modelchicken
+ quietly regress D_BEEF MW ARP_CHIC ARP_SIRLOIN ARP_CHOPS ARP_CANNED POP, robust
+ estimate store Modelbeef
+  quietly regress D_PORK MW ARP_CHIC ARP_SIRLOIN ARP_CHOPS ARP_CANNED POP, robust
+ estimate store Modelpork
+  quietly regress D_FISH MW ARP_CHIC ARP_SIRLOIN ARP_CHOPS ARP_CANNED POP, robust
+ estimate store Modelfish
+ estimate table Modelchicken Modelbeef Modelpork Modelfish, se(%7.5f) t(%7.2f)  stats(r2, F, N)
+ 
+ putdocx begin
+ putdocx table results = etable
+ putdocx save "robust regression without dummies"
+ 
+ //Robust Regression with Dummies
+ quietly regress D_CHIC MW ARP_CHIC ARP_SIRLOIN ARP_CHOPS ARP_CANNED POP Q1 Q2 Q3, robust
+ estimate store Modelchicken
+ quietly regress D_BEEF MW ARP_CHIC ARP_SIRLOIN ARP_CHOPS ARP_CANNED POP Q1 Q2 Q3, robust
+ estimate store Modelbeef
+  quietly regress D_PORK MW ARP_CHIC ARP_SIRLOIN ARP_CHOPS ARP_CANNED POP Q1 Q2 Q3, robust
+ estimate store Modelpork
+  quietly regress D_FISH MW ARP_CHIC ARP_SIRLOIN ARP_CHOPS ARP_CANNED POP Q1 Q2 Q3, robust
+ estimate store Modelfish
+ estimate table Modelchicken Modelbeef Modelpork Modelfish, se(%7.5f) t(%7.2f) stats(r2, F, N)
+ 
+ putdocx begin
+ putdocx table results = etable
+ putdocx save "robust regression with dummies"
+ 
+ //Regress using robust
+ regress D_CHIC MW ARP_CHIC ARP_SIRLOIN ARP_CHOPS ARP_CANNED POP Q1 Q2 Q3, robust
+ estimate store RCHIC
+ regress D_BEEF MW ARP_CHIC ARP_SIRLOIN ARP_CHOPS ARP_CANNED POP Q1 Q2 Q3, robust
+ estimate store RBEEF
+ regress D_PORK MW ARP_CHIC ARP_SIRLOIN ARP_CHOPS ARP_CANNED POP Q1 Q2 Q3, robust
+ estimate store RPORK
+ regress D_FISH MW ARP_CHIC ARP_SIRLOIN ARP_CHOPS ARP_CANNED POP Q1 Q2 Q3, robust
+ estimate store RFISH
+ estimate table RCHIC RBEEF RPORK RFISH, t(%7.2f) p(%7.5f) stats(r2, F, N)
+ 
+ //Regress with log and check for autocorrelation
+ quietly regress lnChicken MW ARP_CHIC ARP_SIRLOIN ARP_CHOPS ARP_CANNED POP Q1 Q2 Q3
+ estimate store ModelChicken
+ generate trendc = _n
+ estat dwatson
+ tsset trendc
+ predict c_hat, residuals
+ tsline c_hat, yline(0)
+ 
+ quietly regress lnBeef MW ARP_CHIC ARP_SIRLOIN ARP_CHOPS ARP_CANNED POP Q1 Q2 Q3
+ estimate store ModelBeef
+ generate trendb = _n
+ estat dwatson
+ tsset trendb
+ predict b_hat, residuals
+ tsline b_hat, yline(0)
+ 
+ quietly regress lnPork MW ARP_CHIC ARP_SIRLOIN ARP_CHOPS ARP_CANNED POP Q1 Q2 Q3
+ estimate store ModelPork
+ generate trendp = _n
+ estat dwatson
+ tsset trendp
+ predict p_hat, residuals
+ tsline p_hat, yline(0)
+ 
+ quietly regress lnFish MW ARP_CHIC ARP_SIRLOIN ARP_CHOPS ARP_CANNED POP Q1 Q2 Q3
+ estimate store ModelFish
+ generate trend4 = _n
+ estat dwatson
+ tsset trend4
+ predict f_hat, residuals
+ tsline f_hat, yline(0)
+ 
+ estimate table ModelChicken ModelBeef ModelPork ModelFish, t(%7.2f) p(%7.5f) stats(r2, F, N)
+ 
+//Regress using robust
+quietly regress lnChicken MW ARP_CHIC ARP_SIRLOIN ARP_CHOPS ARP_CANNED POP Q1 Q2 Q3, robust
+ estimate store ModelChicken
+ quietly regress lnBeef MW ARP_CHIC ARP_SIRLOIN ARP_CHOPS ARP_CANNED POP Q1 Q2 Q3, robust
+ estimate store ModelBeef
+ quietly regress lnPork MW ARP_CHIC ARP_SIRLOIN ARP_CHOPS ARP_CANNED POP Q1 Q2 Q3, robust
+ estimate store ModelPork
+ quietly regress lnFish MW ARP_CHIC ARP_SIRLOIN ARP_CHOPS ARP_CANNED POP Q1 Q2 Q3, robust
+ estimate store ModelFish
+ estimate table Model1 Model2 Model3 Model4, t(%7.2f) p(%7.5f) stats(r2, F, N)
+ 
+//Seemingly unrelated regressions
+sureg (D_CHIC MW ARP_CHIC ARP_SIRLOIN ARP_CHOPS ARP_CANNED POP) (D_BEEF MW ARP_CHIC ARP_SIRLOIN ARP_CHOPS ARP_CANNED POP) (D_PORK MW ARP_CHIC ARP_SIRLOIN ARP_CHOPS ARP_CANNED POP) (D_FISH MW ARP_CHIC ARP_SIRLOIN ARP_CHOPS ARP_CANNED POP)
+estimate store SUR
+estimate table SUR, t(%7.2f) p(%7.5f) stats(r2, F, N)
+
+//Check for multicollinearity
+corr MW ARP_CHIC ARP_SIRLOIN ARP_CHOPS ARP_CANNED POP
+
+//Regress using First Differences
+gen Q =_n
+tsset Q, quarterly
+gen DPD1 = d.D_CHIC
+gen DPD2 = d.D_PORK
+gen DPD3 = d.D_BEEF
+gen DPD4 = d.D_FISH
+gen DMW = d.MW
+gen DARPCHI = d.ARP_CHIC
+gen DARPS = d.ARP_SIRLOIN
+gen DARPCHO = d.ARP_CHOPS
+gen DARPCANNED = d.ARP_CANNED
+gen DPOP = d.POP
+
+reg DPD1 DMW DARPCHI DARPS DARPCHO DARPCANNED DPOP
+estimate store FDChicken
+reg DPD2 DMW DARPCHI DARPS DARPCHO DARPCANNED DPOP 
+estimate store FDBeef
+reg DPD3 DMW DARPCHI DARPS DARPCHO DARPCANNED DPOP 
+estimate store FDPork
+reg DPD4 DMW DARPCHI DARPS DARPCHO DARPCANNED DPOP 
+estimate store FDFish
+estimate table FDChicken FDBeef FDPork FDFish, se(%7.5f) t(%7.2f) stats(r2, F, N)
