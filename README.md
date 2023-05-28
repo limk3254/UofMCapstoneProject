@@ -6,4 +6,4 @@ Deliverable 2 is the exploratory analysis which is done in Excel.
 
 Deliverable 3 is the data analysis which is done in Stata.
 
-Deliverable 4 is the complete report and a PowerPoint with recored audio.
+Deliverable 4 is the complete report and a PowerPoint with recorded audio.
